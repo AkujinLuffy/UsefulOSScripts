@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#check if your log file exist and delete it if (YES) so you have new data only
+test -f systeminfo.log && rm systeminfo.log
+
 # Function to display system load and top 5 processes
 function system_load {
     echo "System Load:"
