@@ -7,9 +7,10 @@ show_menu() {
     echo "2. Clear inside of Track folder (/usr/openv/netbackup/track)"
     echo "3. Start NetBackup and Service vxpbx_exchanged"
     echo "4. Check Certificates"
-    echo "5. Check Mapping"
-    echo "6. Check Connection"
-    echo "7. Exit"
+    echo "5. Renew Certificate"
+    echo "6. Check Mapping"
+    echo "7. Check Connection"
+    echo "8. Exit"
 }
 
 # Define a function for each menu option
@@ -53,6 +54,18 @@ check_certificates() {
     /usr/openv/netbackup/bin/nbcertcmd -getCertificate -force
     echo "Certificate check complete."
 }
+
+renew_certificates() {
+    read -p "Enter the token generated from the master: " token
+
+    echo "Start of renew of the Certificate ..."
+    if /usr/openv/netbackup/bin/nbcertcmd -getCertificate -force -token $token; then
+        echo "Certificate Successfully renewed!"
+    else
+        echo "Failed check the token and the mapping ..."
+    fi
+}
+
 
 check_mapping() {
     echo "Checking Mapping..."
@@ -99,9 +112,10 @@ while true; do
         2) clear_track_folder ;;
         3) start_services ;;
         4) check_certificates ;;
-        5) check_mapping ;;
-        6) check_connection ;;
-        7) echo "Exiting..."; break ;;
+        5) renew_certificates ;;
+        6) check_mapping ;;
+        7) check_connection ;;
+        8) echo "Exiting..."; break ;;
         *) echo "Invalid option, please try again." ;;
     esac
 done
