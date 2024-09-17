@@ -3,6 +3,10 @@ function Show-Menu {
     Clear-Host
     Write-Host "----------------------------------" -ForegroundColor Cyan
     Write-Host " NetBackup and Veritas Service Menu" -ForegroundColor Cyan
+    Write-Host " Tips: Make sure the mapping and the connection is working before:" -ForegroundColor Red
+    Write-Host " Tips: Restarting services" -ForegroundColor Yellow
+    Write-Host " Tips: Clean /track" -ForegroundColor Yello
+    Write-Host " Tips: Check/Renew certificates" -ForegroundColor Yellow
     Write-Host "----------------------------------`n" -ForegroundColor Cyan
     Write-Host "1. Stop Veritas and NetBackup Services"
     Write-Host "2. Clean track folder (C:\Program Files\Veritas\Netbackup\track)"
