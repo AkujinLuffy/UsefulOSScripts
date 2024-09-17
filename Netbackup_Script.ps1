@@ -8,9 +8,10 @@ function Show-Menu {
     Write-Host "2. Clean track folder (C:\Program Files\Veritas\Netbackup\track)"
     Write-Host "3. Start Veritas and NetBackup Services"
     Write-Host "4. Check Certificates"
-    Write-Host "5. Check Mapping"
-    Write-Host "6. Check Connection"
-    Write-Host "7. Exit`n"
+    Write-Host "5. Renew Certificate"
+    Write-Host "6. Check Mapping"
+    Write-Host "7. Check Connection"
+    Write-Host "8. Exit`n"
 }
 
 # Define functions for each task
@@ -54,6 +55,21 @@ function Check-Certificates {
 
     } catch {
         Write-Host "An error occurred while checking certificates: $_" -ForegroundColor Red
+    }
+}
+
+# Define the new function for getting a certificate with a token
+function Get-Certificate-With-Token {
+    $nbcertcmd2 = "C:\Program Files\Veritas\NetBackup\bin\nbcertcmd"
+
+    try {
+        $tokenValue = Read-Host "Enter the token value"
+        Write-Host "Renewing the Certificate..."
+        $getCertificateRenewOutput = & "$nbcertcmd2" -getCertificate -force -token $tokenValue
+        Write-Host $getCertificateRenewOutput -ForegroundColor Green
+
+    } catch {
+        Write-Host "An error occurred while getting the certificate with token: $_" -ForegroundColor Red
     }
 }
 
@@ -123,9 +139,10 @@ do {
         '2' { Clean-TrackFolder }
         '3' { Start-Services }
         '4' { Check-Certificates }
-        '5' { Check-Mapping }
-        '6' { Check-Connection }
-        '7' { exit }
+        '5' { Get-Certificate-With-Token }
+        '6' { Check-Mapping }
+        '7' { Check-Connection }
+        '8' { exit }
         default { Write-Host "Invalid option, please try again." -ForegroundColor Red }
     }
 
