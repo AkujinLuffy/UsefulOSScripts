@@ -2,14 +2,21 @@
 
 # Define a function to display the menu
 show_menu() {
+    echo "----------------------------------"
+    echo " NetBackup and Veritas Service Menu"
+    echo " Tips: Make sure the mapping and the connection is working before:"
+    echo " Tips: Restarting services"
+    echo " Tips: Clean /track"
+    echo " Tips: Check/Renew certificates"
+    echo "----------------------------------"
     echo "Select an option:"
-    echo "1. Stop NetBackup and Service vxpbx_exchanged"
-    echo "2. Clear inside of Track folder (/usr/openv/netbackup/track)"
-    echo "3. Start NetBackup and Service vxpbx_exchanged"
-    echo "4. Check Certificates"
-    echo "5. Renew Certificate"
-    echo "6. Check Mapping"
-    echo "7. Check Connection"
+    echo "1. Check Mapping"
+    echo "2. Check Connection"
+    echo "3. Stop NetBackup and Service vxpbx_exchanged"
+    echo "4. Clear inside of Track folder (/usr/openv/netbackup/track)"
+    echo "5. Start NetBackup and Service vxpbx_exchanged"
+    echo "6. Check Certificates"
+    echo "7. Renew Certificate"
     echo "8. Exit"
 }
 
@@ -96,7 +103,7 @@ check_connection() {
     fi
 
     echo "Pinging $host3..."
-    if ping -c 4 "host3"; then
+    if ping -c 4 "$host3"; then
         echo "Successfully pinged $host3."
     else
         echo "Failed to ping $host3."
@@ -108,13 +115,13 @@ while true; do
     show_menu
     read -p "Enter your choice: " choice
     case $choice in
-        1) stop_services ;;
-        2) clear_track_folder ;;
-        3) start_services ;;
-        4) check_certificates ;;
-        5) renew_certificates ;;
-        6) check_mapping ;;
-        7) check_connection ;;
+        3) stop_services ;;
+        4) clear_track_folder ;;
+        5) start_services ;;
+        6) check_certificates ;;
+        7) renew_certificates ;;
+        1) check_mapping ;;
+        2) check_connection ;;
         8) echo "Exiting..."; break ;;
         *) echo "Invalid option, please try again." ;;
     esac
