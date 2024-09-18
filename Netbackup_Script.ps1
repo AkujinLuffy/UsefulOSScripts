@@ -8,13 +8,13 @@ function Show-Menu {
     Write-Host " Tips: Clean /track" -ForegroundColor Yello
     Write-Host " Tips: Check/Renew certificates" -ForegroundColor Yellow
     Write-Host "----------------------------------`n" -ForegroundColor Cyan
-    Write-Host "1. Stop Veritas and NetBackup Services"
-    Write-Host "2. Clean track folder (C:\Program Files\Veritas\Netbackup\track)"
-    Write-Host "3. Start Veritas and NetBackup Services"
-    Write-Host "4. Check Certificates"
-    Write-Host "5. Renew Certificate"
-    Write-Host "6. Check Mapping"
-    Write-Host "7. Check Connection"
+    Write-Host "1. Check Mapping"
+    Write-Host "2. Check Connection"
+    Write-Host "3. Stop Veritas and NetBackup Services"
+    Write-Host "4. Clean track folder (C:\Program Files\Veritas\Netbackup\track)"
+    Write-Host "5. Start Veritas and NetBackup Services"
+    Write-Host "6. Check Certificates"
+    Write-Host "7. Renew Certificate"
     Write-Host "8. Exit`n"
 }
 
@@ -139,13 +139,13 @@ do {
     $selection = Read-Host "Please enter a number to choose an option"
 
     switch ($selection) {
-        '1' { Stop-Services }
-        '2' { Clean-TrackFolder }
-        '3' { Start-Services }
-        '4' { Check-Certificates }
-        '5' { Get-Certificate-With-Token }
-        '6' { Check-Mapping }
-        '7' { Check-Connection }
+        '3' { Stop-Services }
+        '4' { Clean-TrackFolder }
+        '5' { Start-Services }
+        '6' { Check-Certificates }
+        '7' { Get-Certificate-With-Token }
+        '1' { Check-Mapping }
+        '2' { Check-Connection }
         '8' { exit }
         default { Write-Host "Invalid option, please try again." -ForegroundColor Red }
     }
