@@ -10,6 +10,7 @@ show_menu() {
     echo " Tips: Check/Renew certificates"
     echo "----------------------------------"
     echo "Select an option:"
+    echo "0. Check Services Status"
     echo "1. Check Mapping"
     echo "2. Check Connection"
     echo "3. Stop NetBackup and Service vxpbx_exchanged"
@@ -18,6 +19,14 @@ show_menu() {
     echo "6. Check Certificates"
     echo "7. Renew Certificate"
     echo "8. Exit"
+}
+
+# Function to check the status of the services
+check_services(){
+    echo "Checking Netbackup Service Status ..."
+    systemctl status netbackup
+    echo "Checking VXPBX Service Status ..."
+    /opt/VRTSpbx/bin/vxpbx_exchanged status
 }
 
 # Define a function for each menu option
@@ -115,6 +124,7 @@ while true; do
     show_menu
     read -p "Enter your choice: " choice
     case $choice in
+        0) check_services ;;
         3) stop_services ;;
         4) clear_track_folder ;;
         5) start_services ;;
