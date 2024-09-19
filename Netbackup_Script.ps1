@@ -1,3 +1,12 @@
+# Check if running as administrator
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
+{
+    # Relauch the script as administrator
+    $scriptPath = $MyInvocation.MyCommand.Path
+    Start-Process PowerShell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""
+    exit
+}
+
 # Define the menu-driven function
 function Show-Menu {
     Clear-Host
@@ -54,15 +63,24 @@ function Log-Error {
 
 function Check-ServiceStatus {
     try {
-        # Specify the actual service names you want to check
-        $services = @("VRTSpbx", "NetBackup*") # Replace these with actual service names
+        # Specify the actual service names
+        $services = @("VRTSpbx", "NetBackup Client Service", "NetBackup Legacy Client Service", "NetBackup Legacy Network Service") # Replace with actual service names
         
-        # Check the status of each service
+        # Array to store service status information
+        $serviceStatusList = @()
+
         foreach ($service in $services) {
             $serviceStatus = Get-Service -Name $service -ErrorAction Stop
-            Write-Host "Service: $($serviceStatus.DisplayName)"
-            Write-Host "Status: $($serviceStatus.Status)`n" -ForegroundColor Green
+            $serviceStatusList += [PSCustomObject]@{
+                ServiceName = $serviceStatus.DisplayName
+                Status      = $serviceStatus.Status
+            }
         }
+
+        # Display the status of the services in a table
+        Write-Host "Service Status:" -ForegroundColor Cyan
+        $serviceStatusList | Format-Table -Property ServiceName, Status -AutoSize
+
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error checking service status: $errorMessage" -ForegroundColor Red
@@ -70,20 +88,35 @@ function Check-ServiceStatus {
     }
 }
 
+
 # Define functions for each task
 function Stop-Services {
     try {
-        $services = @("VRTSpbx", "NetBackup*")
+        # Specify the actual service names
+        $services = @("VRTSpbx", "NetBackup Client Service", "NetBackup Legacy Client Service", "NetBackup Legacy Network Service") # Replace with actual service names
+        
+        # Array to store service status information
+        $stoppedServices = @()
+
         foreach ($service in $services) {
-            $serviceStop = Stop-Service -Name $service -Force -ErrorAction Stop
-            Write-Host "Service: $($serviceStop.DisplayName)"
-            Write-Host "Stop: $($serviceStop.Status)`n" -ForegroundColor Green
+            # Attempt to stop each service and collect status
+            Stop-Service -Name $service -Force
+            $serviceStatus = Get-Service -Name $service
+            $stoppedServices += [PSCustomObject]@{
+                ServiceName = $serviceStatus.DisplayName
+                Status      = $serviceStatus.Status
             }
+        }
+
+        # Display the status of stopped services in a table
+        Write-Host "Stopped Services:" -ForegroundColor Cyan
+        $stoppedServices | Format-Table -Property ServiceName, Status -AutoSize
+
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error stopping services: $errorMessage" -ForegroundColor Red
         Log-Error -FunctionName "Stop-Services" -ErrorMessage $errorMessage
-        }
+    }
 }
 
 function Clean-TrackFolder {
@@ -101,17 +134,31 @@ function Clean-TrackFolder {
 
 function Start-Services {
     try {
-        $services = @("VRTSpbx", "NetBackup*")
+        # Specify the actual service names
+        $services = @("VRTSpbx", "NetBackup Client Service", "NetBackup Legacy Client Service", "NetBackup Legacy Network Service") # Replace with actual service names
+        
+        # Array to store service status information
+        $startedServices = @()
+
         foreach ($service in $services) {
-            $serviceStop = Start-Service -Name $service -ErrorAction Stop
-            Write-Host "Service: $($serviceStart.DisplayName)"
-            Write-Host "Start: $($serviceStart.Status)`n" -ForegroundColor Green
+            # Attempt to start each service and collect status
+            Start-Service -Name $service
+            $serviceStatus = Get-Service -Name $service
+            $startedServices += [PSCustomObject]@{
+                ServiceName = $serviceStatus.DisplayName
+                Status      = $serviceStatus.Status
             }
+        }
+
+        # Display the status of started services in a table
+        Write-Host "Started Services:" -ForegroundColor Cyan
+        $startedServices | Format-Table -Property ServiceName, Status -AutoSize
+
     } catch {
         $errorMessage = $_.Exception.Message
-        Write-Host "Error stopping services: $errorMessage" -ForegroundColor Red
+        Write-Host "Error starting services: $errorMessage" -ForegroundColor Red
         Log-Error -FunctionName "Start-Services" -ErrorMessage $errorMessage
-        }
+    }
 }
 
 #function Start-Services {
@@ -128,15 +175,15 @@ function Check-Certificates {
     # Execute the commands and capture the output
     try {
         Write-Host "Clearing host cache..."
-        $clearHostCacheOutput = & "$bpclntcmd" -clear_host_cache -ErrorAction Stop
+        $clearHostCacheOutput = & "$bpclntcmd" -clear_host_cache
         Write-Host $clearHostCacheOutput -ForegroundColor Green
 
         Write-Host "Getting CA Certificate..."
-        $getCACertificateOutput = & "$nbcertcmd" -getCACertificate -ErrorAction Stop
+        $getCACertificateOutput = & "$nbcertcmd" -getCACertificate
         Write-Host $getCACertificateOutput -ForegroundColor Green
 
         Write-Host "Getting Certificate with force..."
-        $getCertificateOutput = & "$nbcertcmd" -getCertificate -force -ErrorAction Stop
+        $getCertificateOutput = & "$nbcertcmd" -getCertificate -force
         Write-Host $getCertificateOutput -ForegroundColor Green
 
     } catch {
@@ -225,6 +272,33 @@ function Check-Connection {
     }
 } 
 
+function Exit-Script {
+    try {
+        # Confirm with the user if they want to delete the log file and directory
+        $response = Read-Host "Do you want to delete the log file and directory? (yes/no)"
+        
+        if ($response -eq "yes") {
+            if (Test-Path -Path $logFilePath) {
+                Remove-Item -Path $logFilePath -Force
+                Write-Host "Log file deleted." -ForegroundColor Green
+            }
+
+            if (Test-Path -Path $logDirectory) {
+                Remove-Item -Path $logDirectory -Recurse -Force
+                Write-Host "Log directory deleted." -ForegroundColor Green
+            }
+        }
+
+        Write-Host "Exiting script." -ForegroundColor Cyan
+        exit
+
+    } catch {
+        $errorMessage = $_.Exception.Message
+        Write-Host "Error during exit: $errorMessage" -ForegroundColor Red
+        Log-Error -FunctionName "Exit-Script" -ErrorMessage $errorMessage
+    }
+}
+
 # Main loop for interacting with the user
 do {
     Show-Menu
@@ -239,7 +313,7 @@ do {
         '7' { Get-Certificate-With-Token }
         '1' { Check-Mapping }
         '2' { Check-Connection }
-        '8' { exit }
+        '8' { Exit-Script }
         default { Write-Host "Invalid option, please try again." -ForegroundColor Red }
     }
 
