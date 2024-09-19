@@ -169,22 +169,28 @@ function Start-Services {
 #}
 
 function Check-Certificates {
-    $bpclntcmd = "C:\Program Files\Veritas\NetBackup\bin\bpclntcmd"
-    $nbcertcmd = "C:\Program Files\Veritas\NetBackup\bin\nbcertcmd"
+    #$bpclntcmd = "C:\Program Files\Veritas\NetBackup\bin\bpclntcmd"
+    #$nbcertcmd = "C:\Program Files\Veritas\NetBackup\bin\nbcertcmd"
 
     # Execute the commands and capture the output
     try {
         Write-Host "Clearing host cache..."
-        $clearHostCacheOutput = & "$bpclntcmd" -clear_host_cache
-        Write-Host $clearHostCacheOutput -ForegroundColor Green
+        #$clearHostCacheOutput = & "$bpclntcmd" -clear_host_cache
+        $clearHostCacheOutput = '"C:\Program Files\Veritas\NetBackup\bin\bpclntcmd" -clear_host_cache'
+        #Write-Host $clearHostCacheOutput -ForegroundColor Green
+        Invoke-Expression $clearHostCacheOutput
 
         Write-Host "Getting CA Certificate..."
-        $getCACertificateOutput = & "$nbcertcmd" -getCACertificate
-        Write-Host $getCACertificateOutput -ForegroundColor Green
+        #$getCACertificateOutput = & "$nbcertcmd" -getCACertificate
+        $getCACertificateOutput = '"C:\Program Files\Veritas\NetBackup\bin\nbcertcmd" -getCACertificate'
+        #Write-Host $getCACertificateOutput -ForegroundColor Green
+        Invoke-Expression $getCACertificateOutput
 
         Write-Host "Getting Certificate with force..."
-        $getCertificateOutput = & "$nbcertcmd" -getCertificate -force
-        Write-Host $getCertificateOutput -ForegroundColor Green
+        #$getCertificateOutput = & "$nbcertcmd" -getCertificate -force
+        $getCertificateOutput = '"C:\Program Files\Veritas\NetBackup\bin\nbcertcmd" -getCertificate -force'
+        #Write-Host $getCertificateOutput -ForegroundColor Green
+        Invoke-Expression $getCertificateOutput
 
     } catch {
         $errorMessage = $_.Exception.Message
