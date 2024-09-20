@@ -40,15 +40,18 @@ show_menu() {
 # Function to check the status of the services
 
 check_services() {
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Checking NetBackup Service Status ..." | tee -a "$LOG_FILE"
-    if ! (systemctl status netbackups 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
+    if ! (systemctl status netbackup 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed: NetBackup service may not be working." | tee -a "$LOG_FILE"
     fi
 
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Checking VXPBX Service Status ..." | tee -a "$LOG_FILE"
     if ! (/opt/VRTSpbx/bin/vxpbx_exchanged status 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed: VXPBX service may not be working." | tee -a "$LOG_FILE"
     fi
+    echo "*************" | tee -a "$LOG_FILE"
 }
 
 #check_services() {
@@ -64,15 +67,18 @@ check_services() {
 
 # Function to stop the services
 stop_services() {
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Stopping NetBackup and Service vxpbx_exchanged..."
     if ! (systemctl stop netbackup 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to stop NetBackup service." | tee -a "$LOG_FILE"
     fi
 
+    echo "*************" | tee -a "$LOG_FILE"
     if ! (/opt/VRTSpbx/bin/vxpbx_exchanged stop 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to stop VXPBX service." | tee -a "$LOG_FILE"
     fi
 
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Services stopped."
     echo "************************************"
     echo "===== NETBACKUP SERVICE STATUS ====="
@@ -87,6 +93,7 @@ stop_services() {
 
 # Function to clear track folder
 clear_track_folder() {
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Clearing the Track folder..."
     TRACK_FOLDER="/usr/openv/netbackup/track/*"
     if (rm -rf "$TRACK_FOLDER" 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
@@ -94,18 +101,22 @@ clear_track_folder() {
     else
         echo "Failed to clear the Track folder." | tee -a "$LOG_FILE"
     fi
+    echo "*************" | tee -a "$LOG_FILE"
 }
 
 #Function to start the services
 start_services() {
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Starting NetBackup and Service vxpbx_exchanged..."
     if ! (systemctl start netbackup 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to start NetBackup service." | tee -a "$LOG_FILE"
     fi
 
+    echo "*************" | tee -a "$LOG_FILE"
     if ! (/opt/VRTSpbx/bin/vxpbx_exchanged start 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to start VXPBX service." | tee -a "$LOG_FILE"
     fi
+    echo "*************" | tee -a "$LOG_FILE"
 
     echo "Services started."
     echo "************************************"
@@ -121,19 +132,23 @@ start_services() {
 
 #Function to check certificates
 check_certificates() {
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Clearing cache ..."
     /usr/openv/netbackup/bin/bpclntcmd -clear_host_cache || log_failure "Failed to clear host cache."
 
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Checking CA Certificates..."
     if ! (/usr/openv/netbackup/bin/nbcertcmd -getCACertificate 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to get CA certificates. Check if mapping and connection is working." | tee -a "$LOG_FILE"
     fi
 
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Checking client Certificates..."
     if ! (/usr/openv/netbackup/bin/nbcertcmd -getCertificate -force 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to get client certificates. Try to renew the certificate" | tee -a "$LOG_FILE"
     fi
 
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Certificate check complete."
 }
 
@@ -141,24 +156,29 @@ check_certificates() {
 renew_certificates() {
     read -p "Enter the token generated from the master: " token
 
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Start of renew of the Certificate ..."
     if ! (/usr/openv/netbackup/bin/nbcertcmd -getCertificate -force -token "$token" 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to renew certificate. Check the token and mapping." | tee -a "$LOG_FILE"
     fi
+    echo "*************" | tee -a "$LOG_FILE"
 }
 
 Function to check the mapping
 check_mapping() {
     echo "Checking Mapping..."
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Review hosts file below..."
     if ! (cat /etc/hosts 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to review the hosts file." | tee -a "$LOG_FILE"
     fi
 
+    echo "*************" | tee -a "$LOG_FILE"
     echo "Review bp.config below..."
     if ! (cat /usr/openv/netbackup/bp.conf 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
         echo "Failed to review bp.conf." | tee -a "$LOG_FILE"
     fi
+    echo "*************" | tee -a "$LOG_FILE"
 
     echo "Mapping check listed above."
 }
@@ -169,14 +189,14 @@ check_connection() {
     read -p "Enter second media server hostname or IP address: " host2
     read -p "Enter third server hostname including FQDN or IP address: " host3
 
+    echo "*************" | tee -a "$LOG_FILE"
     for host in "$host1" "$host2" "$host3"; do
         echo "Pinging $host..."
         if ! (ping -c 4 "$host" 2>&1 | sed "s/^/$(date +'%Y-%m-%d %H:%M:%S') - /" | tee -a "$LOG_FILE"); then
             echo "Failed to ping $host."
             echo "Failed to ping $host. Make sure the mapping is correct." | tee -a "$LOG_FILE"
-        else
-            echo "Successfully pinged $host."
         fi
+    echo "*************" | tee -a "$LOG_FILE"
     done
 }
 
