@@ -1,5 +1,22 @@
 #!/bin/bash
 
+
+#Create a check if sysctemctl works also create a check for root access
+
+# Check if the script is run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "This script must be run as root."
+    exit 1
+fi
+
+# Check if the systemctl command is available
+if ! command -v systemctl &> /dev/null; then
+    echo "systemctl command not found. This utility expects Redhat OS 
+or related flavor with systemctl."
+    exit 1
+fi
+
+#file that logs the errors
 LOG_FILE="script-netbackup.log"
 
 # Check if the log file exists, and delete it if it does, then create a new file
@@ -91,7 +108,7 @@ stop_services() {
     echo "************************************"
 }
 
-# Function to clear track folder
+# Function to clear track folder (INCLUDE A TEST FOR EXISTING TRACK AND THEN DELETED)
 clear_track_folder() {
     echo "*************" | tee -a "$LOG_FILE"
     echo "Clearing the Track folder..."
@@ -164,7 +181,7 @@ renew_certificates() {
     echo "*************" | tee -a "$LOG_FILE"
 }
 
-Function to check the mapping
+#Function to check the mapping
 check_mapping() {
     echo "Checking Mapping..."
     echo "*************" | tee -a "$LOG_FILE"
@@ -183,7 +200,7 @@ check_mapping() {
     echo "Mapping check listed above."
 }
 
-Function to check connection
+#Function to check connection
 check_connection() {
     read -p "Enter first master server hostname or IP address: " host1
     read -p "Enter second media server hostname or IP address: " host2
@@ -200,7 +217,7 @@ check_connection() {
     done
 }
 
-# Function to prompt user for log file deletion
+# Function to prompt user for log file deletion (ADD CHANGE TO OWNERSHIP ONCE YOU EXIT AND RETAIN THE FILE TO USER)
 delete_log_on_exit() {
     echo "Do you want to delete the log file ($LOG_FILE)? (y/n)"
     read -r delete_log_choice
