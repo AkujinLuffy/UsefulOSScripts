@@ -203,6 +203,7 @@ function Start-Services {
     }
 }#>
 
+# Function to refresh the cach and revowke both CA and Client Certificate.
 function Check-Certificates {
     try {
         # Path to the directory containing nbcertcmd
