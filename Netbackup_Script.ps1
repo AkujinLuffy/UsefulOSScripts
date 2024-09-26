@@ -61,6 +61,7 @@ function Log-Error {
     }
 }
 
+# Function to check all importnat services status for the netbackup
 function Check-ServiceStatus {
     try {
         # Specify the actual service names
@@ -89,7 +90,7 @@ function Check-ServiceStatus {
 }
 
 
-# Define functions for each task
+# Functions to stop the Netbackup services and provide status to confirm.
 function Stop-Services {
     try {
         # Specify the actual service names
@@ -100,7 +101,7 @@ function Stop-Services {
 
         foreach ($service in $services) {
             # Attempt to stop each service and collect status
-            Stop-Service -Name $service -Force
+            Stop-Service -Name $service -Force -ErrorAction Stop
             $serviceStatus = Get-Service -Name $service
             $stoppedServices += [PSCustomObject]@{
                 ServiceName = $serviceStatus.DisplayName
@@ -111,20 +112,21 @@ function Stop-Services {
         # Display the status of stopped services in a table
         Write-Host "Stopped Services:" -ForegroundColor Cyan
         $stoppedServices | Format-Table -Property ServiceName, Status -AutoSize
-
+        #Error Loging
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error stopping services: $errorMessage" -ForegroundColor Red
         Log-Error -FunctionName "Stop-Services" -ErrorMessage $errorMessage
     }
 }
-
+#Deleting everything from the track folder
 function Clean-TrackFolder {
     try {
         $trackFolderPath = "C:\Program Files\Veritas\Netbackup\track"
         Remove-Item -Path "$trackFolderPath\*" -Recurse -Force -ErrorAction Stop
         Write-Host "Track folder cleaned." -ForegroundColor Green
         }
+        #Error Loging
     catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error while cleaning track: $errorMessage" -ForegroundColor Red
@@ -132,6 +134,7 @@ function Clean-TrackFolder {
         }
 }
 
+# Function to start the Netbackup services and provide status to confirm.
 function Start-Services {
     try {
         # Specify the actual service names
@@ -142,7 +145,7 @@ function Start-Services {
 
         foreach ($service in $services) {
             # Attempt to start each service and collect status
-            Start-Service -Name $service
+            Start-Service -Name $service -ErrorAction Stop
             $serviceStatus = Get-Service -Name $service
             $startedServices += [PSCustomObject]@{
                 ServiceName = $serviceStatus.DisplayName
@@ -153,7 +156,7 @@ function Start-Services {
         # Display the status of started services in a table
         Write-Host "Started Services:" -ForegroundColor Cyan
         $startedServices | Format-Table -Property ServiceName, Status -AutoSize
-
+        #Error Loging
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error starting services: $errorMessage" -ForegroundColor Red
@@ -167,57 +170,139 @@ function Start-Services {
   #  Start-Service -Name "NetBackup*"
    # Write-Host "Services started successfully." -ForegroundColor Green
 #}
+# REWORK THE FUNCTION FOR CERTIFICATES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-function Check-Certificates {
-    #$bpclntcmd = "C:\Program Files\Veritas\NetBackup\bin\bpclntcmd"
-    #$nbcertcmd = "C:\Program Files\Veritas\NetBackup\bin\nbcertcmd"
+<#function Check-Certificates {
+    $bpclntcmd = "C:\Program Files\Veritas\NetBackup\bin\bpclntcmd"
+    $nbcertcmd = "C:\Program Files\Veritas\NetBackup\bin\nbcertcmd"
 
     # Execute the commands and capture the output
     try {
         Write-Host "Clearing host cache..."
-        #$clearHostCacheOutput = & "$bpclntcmd" -clear_host_cache
-        $clearHostCacheOutput = '"C:\Program Files\Veritas\NetBackup\bin\bpclntcmd" -clear_host_cache'
-        #Write-Host $clearHostCacheOutput -ForegroundColor Green
-        Invoke-Expression $clearHostCacheOutput
+        $clearHostCacheOutput = & "$bpclntcmd" -clear_host_cache
+        #$clearHostCacheOutput = '"C:\Program Files\Veritas\NetBackup\bin\bpclntcmd" -clear_host_cache'
+        Write-Host $clearHostCacheOutput -ForegroundColor Green
+        #Invoke-Expression $clearHostCacheOutput
 
         Write-Host "Getting CA Certificate..."
-        #$getCACertificateOutput = & "$nbcertcmd" -getCACertificate
-        $getCACertificateOutput = '"C:\Program Files\Veritas\NetBackup\bin\nbcertcmd" -getCACertificate'
-        #Write-Host $getCACertificateOutput -ForegroundColor Green
-        Invoke-Expression $getCACertificateOutput
+        $getCACertificateOutput = & "$nbcertcmd" -getCACertificate
+        #$getCACertificateOutput = '"C:\Program Files\Veritas\NetBackup\bin\nbcertcmd" -getCACertificate'
+        Write-Host $getCACertificateOutput -ForegroundColor Green
+        #Invoke-Expression $getCACertificateOutput
 
         Write-Host "Getting Certificate with force..."
-        #$getCertificateOutput = & "$nbcertcmd" -getCertificate -force
-        $getCertificateOutput = '"C:\Program Files\Veritas\NetBackup\bin\nbcertcmd" -getCertificate -force'
-        #Write-Host $getCertificateOutput -ForegroundColor Green
-        Invoke-Expression $getCertificateOutput
-
+        $getCertificateOutput = & "$nbcertcmd" -getCertificate -force
+        #$getCertificateOutput = '"C:\Program Files\Veritas\NetBackup\bin\nbcertcmd" -getCertificate -force'
+        Write-Host $getCertificateOutput -ForegroundColor Green
+        #Invoke-Expression $getCertificateOutput
+        #Error Loging
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error checking the certificate: $errorMessage" -ForegroundColor Red
         Log-Error -FunctionName "Check-Certificates" -ErrorMessage $errorMessage
     }
+}#>
+
+function Check-Certificates {
+    try {
+        # Path to the directory containing nbcertcmd
+        $nbcertcmdPath = "C:\Program Files\Veritas\NetBackup\bin"
+
+        # Change directory to the bin path
+        Push-Location -Path $nbcertcmdPath
+
+        # Define commands to execute
+        $commands = @(
+            ".\bpclntcmd.exe -clear_host_cache",
+            ".\nbcertcmd.exe -getCACertificate",
+            ".\nbcertcmd.exe -getCertificate -force"
+        )
+
+        foreach ($command in $commands) {
+            # Execute the command and capture the output
+            $output = Invoke-Expression $command
+            Write-Host "`nExecuting: $command" -ForegroundColor Cyan
+            Write-Host "Output: $output"
+
+            # Check if the output indicates success
+            if ($output -notmatch "successful") {
+                $errorMessage = "Command failed or output did not confirm success for '$command'. Output: $output"
+                Write-Host $errorMessage -ForegroundColor Red
+                Log-Error -FunctionName "Check-Certificates" -ErrorMessage $errorMessage
+            } else {
+                Write-Host "Command executed successfully for '$command'." -ForegroundColor Green
+            }
+        }
+
+    } catch {
+        $errorMessage = $_.Exception.Message
+        Write-Host "Error executing certificates check: $errorMessage" -ForegroundColor Red
+        Log-Error -FunctionName "Check-Certificates" -ErrorMessage $errorMessage
+    } finally {
+        # Return to the original directory
+        Pop-Location
+    }
 }
 
-# Define the new function for getting a certificate with a token
-function Get-Certificate-With-Token {
+# Define the new function for getting a certificate with a token (logging not working properly)
+<#function Get-Certificate-With-Token {
+	$nbcertcmd2 = "C:\Program Files\Veritas\NetBackup\bin\nbcertcmd"
     try {
         $tokenValue = Read-Host "Enter the token value"
-        $command = '"C:\Program Files\Veritas\NetBackup\bin\nbcertcmd" -getCertificate -force -token ' + $tokenValue
-
-        Invoke-Expression $command
-
+        $renewCertificate = & "$nbcertcmd2" -getCertificate -force -token $tokenValue
+		Write-Host $renewCertificate -ForegroundColor Green
+        
+        #Error Loging
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error getting certificate with token: $errorMessage" -ForegroundColor Red
         Log-Error -FunctionName "Get-Certificate-With-Token" -ErrorMessage $errorMessage
     }
+}#>
+
+#Fixed functionallity and error loging.
+function Get-Certificate-With-Token {
+    try {
+        # Path to the directory containing nbcertcmd
+        $nbcertcmdPath = "C:\Program Files\Veritas\NetBackup\bin"
+
+        # Change directory to the bin path
+        Push-Location -Path $nbcertcmdPath
+
+        # Prompt for token value
+        $tokenValue = Read-Host "Enter the token value"
+
+        # Command to execute with token
+        $command = ".\nbcertcmd.exe -getCertificate -force -token $tokenValue"
+
+        # Execute the command and capture the output
+        $output = Invoke-Expression $command
+
+        # Check if the output includes "successful"
+        if ($output -match "successful") {
+            Write-Host "Certificate successfully retrieved." -ForegroundColor Green
+        } else {
+            $errorMessage = "Certificate retrieval failed or output did not confirm success. Output: $output"
+            Write-Host $errorMessage -ForegroundColor Red
+            Log-Error -FunctionName "Get-Certificate-With-Token" -ErrorMessage $errorMessage
+        }
+
+    } catch {
+        $errorMessage = $_.Exception.Message
+        Write-Host "Error executing command in Get-Certificate-With-Token: $errorMessage" -ForegroundColor Red
+        Log-Error -FunctionName "Get-Certificate-With-Token" -ErrorMessage $errorMessage
+    } finally {
+        # Return to the original directory
+        Pop-Location
+    }
 }
 
 function Check-Mapping {
     try {
-        # List the content of the hosts file
+        # Define the path to the hosts file
         $hostsFilePath = "C:\Windows\System32\drivers\etc\hosts"
+        
+        # Check and display contents of the hosts file
         if (Test-Path $hostsFilePath) {
             Write-Host "Contents of the hosts file:" -ForegroundColor Cyan
             Get-Content -Path $hostsFilePath | ForEach-Object { Write-Host $_ }
@@ -225,21 +310,31 @@ function Check-Mapping {
             Write-Host "Hosts file not found at $hostsFilePath" -ForegroundColor Red
         }
 
-        Write-Host "`nRetrieving NetBackup Server registry config:" -ForegroundColor Cyan
-        # Access the specified registry key
+        # Registry path for NetBackup Server configuration
         $registryPath = "HKLM:\SOFTWARE\Veritas\NetBackup\CurrentVersion\Config"
+
         if (Test-Path $registryPath) {
-            # Get the specific registry value for 'Server'
-            $serverValue = Get-ItemProperty -Path $registryPath -Name "Server" -ErrorAction Stop
+            # Retrieve the registry value for "Server"
+            $serverValues = Get-ItemProperty -Path $registryPath -Name "Server" -ErrorAction Stop
             
-            # Display the 'Server' value name and data in a table
-            [PSCustomObject]@{
-                Name = "Server"
-                Data = $serverValue.Server
-            } | Format-Table -AutoSize
+            Write-Host "`nNetBackup Server Registry Configurations:" -ForegroundColor Cyan
+            $serverDetails = $serverValues.Server
+
+            # Use different display options depending on the type of the Server value
+            if ($serverDetails -is [Array]) {
+                # If the Server value is an array (multi-line/multi-valued), display each line
+                $serverDetails | ForEach-Object {
+                    Write-Host $_
+                }
+            } else {
+                # Otherwise, display it directly
+                Write-Host $serverDetails
+            }
+
         } else {
             Write-Host "Registry path not found: $registryPath" -ForegroundColor Red
         }
+        #Error Loging
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error checking mapping: $errorMessage" -ForegroundColor Red
@@ -247,6 +342,7 @@ function Check-Mapping {
     }
 }
 
+#Loop trough user input then use 'done' to initiate 4 pings per input. Work for both IP and hostname.
 function Check-Connection {
     try {
         Write-Host "Enter hostnames or IP addresses one at a time to ping them. Type 'done' when finished." -ForegroundColor Cyan
@@ -265,6 +361,7 @@ function Check-Connection {
                 Test-Connection -ComputerName $inputHost -Count 4 -ErrorAction Stop | ForEach-Object {
                     Write-Host "Reply from $($_.Address): Bytes=$($_.BufferSize) Time=$($_.ResponseTime)ms TTL=$($_.TimeToLive)"
                 }
+                #Error Loging
             } catch {
                 $innerErrorMessage = $_.Exception.Message
                 Write-Host "Ping to $inputHost failed: $innerErrorMessage" -ForegroundColor Red
@@ -297,7 +394,7 @@ function Exit-Script {
 
         Write-Host "Exiting script." -ForegroundColor Cyan
         exit
-
+#Error Loging
     } catch {
         $errorMessage = $_.Exception.Message
         Write-Host "Error during exit: $errorMessage" -ForegroundColor Red
